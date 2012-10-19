@@ -184,7 +184,7 @@ class BaseCodeGenerator(NodeVisitor):
 
     def write_string_const(self, x):
         xrepr = repr(x)
-        if isinstance(xrepr, unicode):
+        if xrepr[0] == 'u':
             self.write(xrepr[1:])
         else:
             self.write(xrepr)
@@ -411,11 +411,16 @@ class MacroCodeGenerator(BaseCodeGenerator):
         elif val is False:
             output = "false"
         else:
-            output = repr(val)
+            output = None
 
         if dotted_name is None:
-            self.write(output)
+            if output is None:
+                self.write_string_const(val)
+            else:
+                self.write(output)
         else:
+            if output is None:
+                output = repr(val)
             dotted_name.append(output)
 
         return False

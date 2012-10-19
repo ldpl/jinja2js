@@ -1,3 +1,11 @@
 {% macro unicode_in_macro() -%}
     тест
 {%- endmacro %}
+
+{% macro unicode_in_dict_keys() %}
+    {% set d = {'тест':'aaa'} %}
+{% endmacro %}
+
+{% macro unicode_in_dict_values() %}
+    {% set d = {'aa': 'тест'} %}
+{% endmacro %}

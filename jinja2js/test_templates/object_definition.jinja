@@ -1,0 +1,19 @@
+{% macro object_definition() -%}
+    {% set a = {'a': 'b', 'b': 'c'} %}
+{%- endmacro %}
+
+{% macro object_definition_with_varible_value(val) -%}
+    {% set a = {'a': val, 'b': 'c'} %}
+{%- endmacro %}
+
+{% macro object_definition_with_dot_in_key() -%}
+    {% set a = {'a.b': 'b', 'b': 'c'} %}
+{%- endmacro %}
+
+{% macro object_definition_with_quotes_in_key() -%}
+    {% set a = {"'a.b'": 'b', '"b"': 'c', "b\"'": "b\"'", 'b\'"': 'b\'"'} %}
+{%- endmacro %}
+
+{% macro object_definition_with_numbers_in_key() -%}
+    {% set a = {1: 'b', 3: 'c'} %}
+{%- endmacro %}

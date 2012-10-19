@@ -182,6 +182,13 @@ class BaseCodeGenerator(NodeVisitor):
         self.newline(node, extra)
         self.write(x)
 
+    def write_string_const(self, x):
+        xrepr = repr(x)
+        if isinstance(xrepr, unicode):
+            self.write(xrepr[1:])
+        else:
+            self.write(xrepr)
+
     def mark(self, node):
         # Mark the current output to correspond to the node.
         if node is not None and node.lineno != self._last_line:
@@ -431,12 +438,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
             # get to output a dictionary with a variable key string?
             # So it is either a `Const` or `Name` node.
             if isinstance(item.key, jinja2.nodes.Const):
-                if "." in item.key.value:
-                    raise jinja2.compiler.TemplateAssertionError(
-                        "My templates get confused when you try and create a"
-                        " dictionary with a key with a dot in it.",
-                        item.key.lineno, self.name, self.filename)
-                self.write(item.key.value)
+                self.write_string_const(item.key.value)
             elif isinstance(item.key, jinja2.nodes.Name):
                 self.write(item.key.name)
             else:
@@ -568,7 +570,6 @@ class MacroCodeGenerator(BaseCodeGenerator):
                 self.write("%sListLen" % frame.forloop_buffer)
             elif node.attr == "cycle":
                 self.write('_.arg_getter(%sIndex)' % frame.forloop_buffer)
-                print frame.forloop_buffer
             else:
                 raise AttributeError("loop.%s not defined" % node.attr)
         else:

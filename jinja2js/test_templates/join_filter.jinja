@@ -2,7 +2,7 @@
     {{ ['a', 'b', 'c']|join }}
 {%- endmacro %}
 
-{% macro join_filter() -%}
+{% macro join_filter_comma() -%}
     {{ ['a', 'b', 'c']|join(',') }}
 {%- endmacro %}
 
@@ -16,4 +16,8 @@
 
 {% macro join_filter_complex_arg(config, type) -%}
     {{ ['a', 'b', 'c']|join(config.separator[type].value) }}
+{%- endmacro %}
+
+{% macro join_filter(value, separator) -%}
+    {{ value|join(separator) }}
 {%- endmacro %}

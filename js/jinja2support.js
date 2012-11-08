@@ -9,10 +9,10 @@
         var obj_str = "[object " + _types[i] + "]";
         _str_to_type[obj_str] = _types[i].toLowerCase();
     }
-    jinja2support.type_of = function (value) {
+    var type_of = function (value) {
         if (value === undefined) return 'undefined';
         if (value === null) return 'null';
-        type_str = Object.prototype.toString.call(value);
+        type_str = toString.call(value);
         if (type_str in _str_to_type)
             return _str_to_type[type_str];
         return 'object';
@@ -40,7 +40,7 @@
     };
 
     jinja2support.in_ = function(value, collection) {
-        if (toString.call(collection) === '[object Array]') {
+        if (type_of(collection) === '[object Array]') {
             if (indexOf) {
                 return indexOf.call(collection, value) > -1;
             }
@@ -54,17 +54,19 @@
     };
 
     jinja2support.not = function(value) {
-        var type = toString.call(value);
-        if (type === '[object Array]') return !value.length;
-        if (type === '[object Object]') {
-            for (var prop in value) if (has.call(value, prop)) return false;
-            return true;
-        }
-        return !value;
+        return !jinja2support.truth(value);
     };
 
     jinja2support.truth = function(value) {
-        return !jinja2support.not(value);
+        var type = type_of(value);
+        if (type === 'array') return value.length;
+        if (type === 'object') {
+            for (var prop in value)
+                if (has.call(value, prop))
+                    return false;
+            return true;
+        }
+        return !value;
     };
 
     jinja2support.arg_getter = function(index) {
@@ -74,7 +76,7 @@
     };
 
     jinja2support.length = function(value) {
-        if (jinja2support.type_of(value) != 'object')
+        if (type_of(value) !== 'object')
             return value.length;
         var res = 0;
         for (var k in value) res++;

@@ -231,8 +231,8 @@ class BaseCodeGenerator(NodeVisitor):
             self.visit(node, frame)
 
     def visit(self, node, *args, **kwargs):
-        if isinstance(node, (str, unicode)):
-            return self.visit_String(node)
+        if isinstance(node, (str, unicode, bool, int)):
+            return self.visit_Value(node)
         return NodeVisitor.visit(self, node, *args, **kwargs)
 
 
@@ -968,8 +968,13 @@ class MacroCodeGenerator(BaseCodeGenerator):
         else:
             self.write("''")
 
-    def visit_String(self, string):
-        self.write_string_const(string)
+    def visit_Value(self, value):
+        if isinstance(value, bool):
+            self.write('false')
+        elif isinstance(value, int):
+            self.write(str(value))
+        else:
+            self.write_string_const(value)
 
 
 _pre_tag_whitespace = re.compile(r'\s*<')

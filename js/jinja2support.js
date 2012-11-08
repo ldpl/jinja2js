@@ -62,10 +62,10 @@
         if (str.length <= length) {
             return str;
         }
-        if (!keywords) {
+        if (killwords) {
             return str.substring(0, length) + end;
         }
-        var words = s.split(' ');
+        var words = str.split(' ');
         var result = [];
         var m = 0;
         for (var i = 0; i < words.length; i++) {

@@ -29,7 +29,6 @@ def compare(result, expected):
 
 
 def execute_template(js_source, source_file, support_file, tests_file):
-    # j2_template = Template(open(source_file).read())
     j2_template = env.get_template(source_file)
     tests = []
     for l in open(tests_file):

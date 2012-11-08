@@ -1,0 +1,15 @@
+{%- macro truncate_filter(value, length, killwords, end) -%}
+    {{ value|truncate(length, killwords, end) }}
+{%- endmacro -%}
+
+{%- macro truncate_filter3(value, length, killwords) -%}
+    {{ value|truncate(length, killwords) }}
+{%- endmacro -%}
+
+{%- macro truncate_filter2(value, length) -%}
+    {{ value|truncate(length) }}
+{%- endmacro -%}
+
+{%- macro truncate_filter1(value) -%}
+    {{ value|truncate }}
+{%- endmacro -%}

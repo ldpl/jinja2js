@@ -293,6 +293,8 @@ class MacroCodeGenerator(BaseCodeGenerator):
     # templates, comments should be displayed in the JS file. We need them for
     # any closure compiler hints we may want to put in.
 
+    _RX_ALPHANUMERIC = re.compile(r'[A-Za-z_\d]*')
+
     def __init__(self, environment, stream, namespace, name, filename):
         super(MacroCodeGenerator, self).__init__(environment, name, filename)
 
@@ -305,7 +307,6 @@ class MacroCodeGenerator(BaseCodeGenerator):
         # the templates that is out side the macros.
         if frame.toplevel:
             return
-
         finalize = unicode
 
         # try to evaluate as many chunks as possible into a static
@@ -406,7 +407,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
                 "Filter does not exist: '%s'" % node.name,
                 node.lineno, self.name, self.filename)
 
-    def visit_Const(self, node, frame, dotted_name=None):
+    def visit_Const(self, node, frame):
         # XXX - need to know the JavaScript ins and out here.
         val = node.value
         if val is None:
@@ -418,15 +419,10 @@ class MacroCodeGenerator(BaseCodeGenerator):
         else:
             output = None
 
-        if dotted_name is None:
-            if output is None:
-                self.write_string_const(val)
-            else:
-                self.write(output)
+        if output is None:
+            self.write_string_const(val)
         else:
-            if output is None:
-                output = repr(val)
-            dotted_name.append(output)
+            self.write(output)
 
         return False
 
@@ -461,7 +457,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
 
         self.write("}")
 
-    def visit_Name(self, node, frame, dotted_name=None):
+    def visit_Name(self, node, frame):
         # declared_parameter
         # declared
         # outer_undeclared
@@ -499,61 +495,43 @@ class MacroCodeGenerator(BaseCodeGenerator):
 
             frame.assigned_names.add(ids.imports[name])
         else:
-            if dotted_name is None:
-                raise jinja2.compiler.TemplateAssertionError(
-                    "Variable '%s' not defined" % name,
-                    node.lineno, self.name, self.filename)
+            raise jinja2.compiler.TemplateAssertionError(
+                "Variable '%s' not defined" % name,
+                node.lineno, self.name, self.filename)
 
             output = name
 
-        if dotted_name is None:
-            self.write(output)
-        else:
-            dotted_name.append(output)
+        self.write(output)
 
         return isparam
 
-    def visit_Slice(self, node, frame, dotted_name=None):
+    def visit_Slice(self, node, frame):
         if node.step is not None:
             raise NotImplementedError("jinja2js does not currently support "
                                       "steps in slices")
 
+        self.write('.slice(')
         if node.start:
-            self.visit(node.start, frame, dotted_name)
-            start = dotted_name.pop()
+            self.visit(node.start, frame)
         else:
-            start = '0'
+            self.write('0')
 
         if node.stop:
-            self.visit(node.stop, frame, dotted_name)
-            stop = ', %s' % dotted_name.pop()
-        else:
-            stop = ''
+            self.write(', ')
+            self.visit(node.stop, frame)
+        self.write(')')
 
-        dotted_name.append('slice(%s%s)' % (start, stop))
-
-    def visit_Getitem(self, node, frame, dotted_name=None):
-
-        write_variable = False
-        if dotted_name is None:
-            dotted_name = []
-            write_variable = True
-
-        self.visit(node.node, frame, dotted_name)
-
-        arg_name = []
-        self.visit(node.arg, frame, arg_name)
+    def visit_Getitem(self, node, frame):
+        self.visit(node.node, frame)
 
         if isinstance(node.arg, jinja2.nodes.Slice):
-            dotted_name.extend(arg_name)
+            self.visit(node.arg, frame)
         else:
-            node = dotted_name.pop()
-            dotted_name.append("%s[%s]" % (node, '.'.join(arg_name)))
+            self.write('[')
+            self.visit(node.arg, frame)
+            self.write(']')
 
-        if write_variable:
-            self.write(".".join(dotted_name))
-
-    def visit_Getattr(self, node, frame, dotted_name=None):
+    def visit_Getattr(self, node, frame):
         # We only need to check when `loop` is the first name-space in the
         # Getattr node. Sometimes we have more then one level name-spaces and
         # we are inside a for loop, likely when we are calling other macros.
@@ -583,20 +561,14 @@ class MacroCodeGenerator(BaseCodeGenerator):
             else:
                 raise AttributeError("loop.%s not defined" % node.attr)
         else:
-            # write_variable is going to be true if dotted_name is None which
-            # implies that we are gathering the variable name together. So
-            # don't write it out yet.
-            write_variable = False
-            if dotted_name is None:
-                dotted_name = []
-                write_variable = True
-
-            # collect variable name
-            self.visit(node.node, frame, dotted_name)
-            dotted_name.append(node.attr)
-
-            if write_variable:
-                self.write(".".join(dotted_name))
+            self.visit(node.node, frame)
+            if self._RX_ALPHANUMERIC.match(node.attr):
+                self.write('.')
+                self.write(node.attr)
+            else:
+                self.write('[')
+                self.write_string_const(node.attr)
+                self.write(']')
 
     def binop(operator):
         def visitor(self, node, frame):
@@ -918,23 +890,23 @@ class MacroCodeGenerator(BaseCodeGenerator):
 
     def visit_Call(self, node, frame, forward_caller=None):
         # function symbol to call
-        dotted_name = []
         call_frame = frame.soft()
         call_frame.escaped = True
-        self.visit(node.node, call_frame, dotted_name=dotted_name)
-        func_name = ".".join(dotted_name)
 
+        # NOTE: removed along with dotted_names
         # Like signature(), this assumes that function calls with only
         # positional arguments are calls to javascript functions. This
         # allows you to call differently named functions in the client JS
         # than when rendering a template on the server.
-        if node.args and not node.kwargs \
-               and func_name in getattr(self.environment, "js_func_aliases",
-                                        []):
-            func_name = self.environment.js_func_aliases[func_name]
+        # if node.args and not node.kwargs and func_name \
+        #        and func_name in getattr(self.environment, "js_func_aliases",
+        #                                 []):
+        #     func_name = self.environment.js_func_aliases[func_name]
+        # else:
+        self.visit(node.node, call_frame)
 
         # function signature
-        self.write("%s(" % func_name)
+        self.write("(")
         self.signature(node, frame, forward_caller)
         self.write(")")
 

@@ -1,20 +1,8 @@
-> join_filter_default()
-< abc
+join_filter_default()
+join_filter_comma()
+join_filter_var_arg(",")
+join_filter_array_arg(["x", "y", "z"], 1)
+join_filter_complex_arg({"separator": [null, {"value": "x"}]}, 1)
 
-> join_filter_comma()
-< a,b,c
-
-> join_filter_var_arg()
-< a,b,c
-
-> join_filter_array_arg(['x', 'y', 'z'], 1)
-< aybyc
-
-> join_filter_complex_arg({separator: [null, {value: 'x'}]}, 1)
-< axbxc
-
-> join_filter(['k', 'l', 'm'], '.')
-< k.l.m
-
-> join_filter(['k', 'l', 'm'], 'aaa')
-< kaaalaaam
+join_filter(["k", "l", "m"], ".")
+join_filter(["k", "l", "m"], "aaa")

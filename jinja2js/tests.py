@@ -2,11 +2,12 @@ import difflib
 import fnmatch
 import os
 import re
+import json
 
 from nose.tools import raises
 import spidermonkey
 
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, Template
 from jinja2.compiler import TemplateAssertionError
 
 import jscompiler
@@ -27,19 +28,22 @@ def compare(result, expected):
         assert False, "Result and expected do not match"
 
 
-def execute_template(source, support_file, tests_file):
+def execute_template(js_source, source_file, support_file, tests_file):
+    # j2_template = Template(open(source_file).read())
+    j2_template = env.get_template(source_file)
     tests = []
     for l in open(tests_file):
         l = l.strip()
-        if l.startswith('>'):
-            content = l[1:].strip()
-            tests.append([content, None])
-        elif l.startswith('<'):
-            content = l[1:].strip()
-            if tests[-1][1] is None:
-                tests[-1][1] = content
-            else:
-                tests[-1][1] += '\n' + content
+        if not l:
+            continue
+        args_start_pos = l.find('(')
+        args_end_pos = l.rfind(')')
+        macro_name = l[:args_start_pos]
+        args_str = l[args_start_pos: args_end_pos + 1]
+        args_json = '[' + args_str[1:-1] + ']'
+        args = json.loads(args_json)
+        tests.append((macro_name, args, args_str))
+
     rt = spidermonkey.Runtime()
     cx = rt.new_context()
     window = {}
@@ -47,11 +51,13 @@ def execute_template(source, support_file, tests_file):
     support_js = open(support_file).read()
     cx.execute(support_js)
     cx.add_global('jinja2support', window['jinja2support'])
-    cx.execute(source)
-    for command, expected in tests:
-        result = cx.execute('window.jinja2js.' + command).strip()
+    cx.execute(js_source)
+    for macro, args, args_str in tests:
+        expected = getattr(j2_template.module, macro)(*args)
+        js_command = 'window.jinja2js.' + macro + args_str
+        result = cx.execute(js_command).strip()
         if result != expected:
-            print "Test:", command
+            print "Test:", macro, args_str
             print "Expected:"
             print expected
             print "Result:"
@@ -70,7 +76,7 @@ def load_compare_execute(directory, support_file, source_file):
     test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', source_file))
     if os.path.exists(test_file):
         correct_test = True
-        execute_template(tpl_src, support_file, test_file)
+        execute_template(tpl_src, source_file, support_file, test_file)
     if not correct_test:
         assert False, "Invalid test: .js or .test file required"
 

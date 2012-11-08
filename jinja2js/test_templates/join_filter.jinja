@@ -18,6 +18,10 @@
     {{ ['a', 'b', 'c']|join(config.separator[type].value) }}
 {%- endmacro %}
 
+{%- macro join_filter_expr_arg(a, b) -%}
+    {{ ['a', 'b']|join(a + b) }}
+{%- endmacro -%}
+
 {% macro join_filter(value, separator) -%}
     {{ value|join(separator) }}
 {%- endmacro %}

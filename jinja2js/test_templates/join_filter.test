@@ -3,6 +3,7 @@ join_filter_comma()
 join_filter_var_arg(",")
 join_filter_array_arg(["x", "y", "z"], 1)
 join_filter_complex_arg({"separator": [null, {"value": "x"}]}, 1)
+join_filter_expr_arg("x", "y")
 
 join_filter(["k", "l", "m"], ".")
 join_filter(["k", "l", "m"], "aaa")

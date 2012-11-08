@@ -230,6 +230,11 @@ class BaseCodeGenerator(NodeVisitor):
         for node in nodes:
             self.visit(node, frame)
 
+    def visit(self, node, *args, **kwargs):
+        if isinstance(node, (str, unicode)):
+            return self.visit_String(node)
+        return NodeVisitor.visit(self, node, *args, **kwargs)
+
 
 class CodeGenerator(BaseCodeGenerator):
 
@@ -963,6 +968,10 @@ class MacroCodeGenerator(BaseCodeGenerator):
         else:
             self.write("''")
 
+    def visit_String(self, string):
+        self.write_string_const(string)
+
+
 _pre_tag_whitespace = re.compile(r'\s*<')
 _post_tag_whitespace = re.compile(r'>\s*')
 _excess_whitespace = re.compile(r'\s\s+')
@@ -1008,15 +1017,11 @@ def filter_default(generator, node, frame, default_value=""):
 
 
 @register_filter('join')
-def filter_join(generator, node, frame, separator=None):
+def filter_join(generator, node, frame, separator=''):
     generator.visit(node.node, frame)
-    if separator is None:
-        separator = "''"
-    else:
-        separator_value = []
-        generator.visit(separator, frame, separator_value)
-        separator = '.'.join(separator_value)
-    generator.write('.join(%s)' % separator)
+    generator.write('.join(')
+    generator.visit(separator, frame)
+    generator.write(')')
 
 
 @register_filter("last")

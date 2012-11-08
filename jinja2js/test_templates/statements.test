@@ -1,0 +1,5 @@
+js> func_ret_dict(function(expr) {return {"cluster": [1, 2, 4]};}, 2)
+py> func_ret_dict(lambda expr: {"cluster": [1, 2, 4]}, 2)
+
+js> func_ret_dict2({"synset": function(expr) {return {"cluster": [1, 2, 4]};}}, 2)
+py> func_ret_dict2({"synset": lambda expr: {"cluster": [1, 2, 4]}}, 2)

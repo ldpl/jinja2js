@@ -70,6 +70,7 @@ def execute_template(js_source, source_file, support_file, tests_file):
     support_js = open(support_file).read()
     cx.execute(support_js)
     cx.add_global('jinja2support', window['jinja2support'])
+    print js_source
     cx.execute(js_source)
     for macro, args_py, args_js in tests:
         expected = getattr(j2_template.module, macro)(*args_py)

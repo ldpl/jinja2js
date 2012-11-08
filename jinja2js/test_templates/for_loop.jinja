@@ -1,5 +1,11 @@
-{% macro forinlist(jobs) -%}
-{% for job in jobs %}
-{{ job.name }} does {{ jobData.name }}
-{% endfor %}
-{%- endmacro %}
+{%- macro forinlist(jobs) -%}
+    {%- for job in jobs -%}
+        {{ job.name }}
+    {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro for_2(synset, expr) -%}
+    {%- for c in synset.get_sample(expr).cluster -%}
+        {{ c }}
+    {%- endfor -%}
+{%- endmacro -%}

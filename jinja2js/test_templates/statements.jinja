@@ -1,0 +1,8 @@
+{%- macro func_ret_dict(get_sample, expr) -%}
+    {{ expr.cluster }}
+    {{ get_sample(expr).cluster }}
+{%- endmacro -%}
+
+{%- macro func_ret_dict2(cluster, expr) -%}
+    {{ synset.get_sample(expr).cluster }}
+{%- endmacro -%}

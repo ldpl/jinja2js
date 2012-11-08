@@ -35,13 +35,33 @@ def execute_template(js_source, source_file, support_file, tests_file):
         l = l.strip()
         if not l or l[0] == '#':
             continue
+        lang = 'any'
+        if l.startswith('js>'):
+            l = l[3:].strip()
+            lang = 'js'
+        elif l.startswith('py>'):
+            l = l[3:].strip()
+            lang = 'py'
+
         args_start_pos = l.find('(')
         args_end_pos = l.rfind(')')
         macro_name = l[:args_start_pos]
         args_str = l[args_start_pos: args_end_pos + 1]
         args_json = '[' + args_str[1:-1] + ']'
-        args = json.loads(args_json)
-        tests.append((macro_name, args, args_str))
+        if lang == 'any':
+            args = json.loads(args_json)
+            tests.append([macro_name, args, args_str])
+        elif lang == 'js':
+            if tests and tests[-1][0] == macro_name:
+                tests[-1][2] = args_str
+            else:
+                tests.append([macro_name, None, args_str])
+        elif lang == 'py':
+            args = eval(args_json)
+            if tests and tests[-1][0] == macro_name:
+                tests[-1][1] = args
+            else:
+                tests.append([macro_name, args, None])
 
     rt = spidermonkey.Runtime()
     cx = rt.new_context()
@@ -51,9 +71,9 @@ def execute_template(js_source, source_file, support_file, tests_file):
     cx.execute(support_js)
     cx.add_global('jinja2support', window['jinja2support'])
     cx.execute(js_source)
-    for macro, args, args_str in tests:
-        expected = getattr(j2_template.module, macro)(*args)
-        js_command = 'window.jinja2js.' + macro + args_str
+    for macro, args_py, args_js in tests:
+        expected = getattr(j2_template.module, macro)(*args_py)
+        js_command = 'window.jinja2js.' + macro + args_js
         result = cx.execute(js_command).strip()
         if result != expected:
             print "Test:", macro, args_str

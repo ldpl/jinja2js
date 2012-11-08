@@ -27,14 +27,7 @@ def compare(result, expected):
         assert False, "Result and expected do not match"
 
 
-def load_and_compare(source_file, expected_file):
-    src = jscompiler.generate(env, expected_file, source_file)
-    with open(expected_file) as f:
-        expected = f.read()
-        compare(src, expected)
-
-
-def execute_js(source_file, tests_file):
+def execute_template(source, support_file, tests_file):
     tests = []
     for l in open(tests_file):
         l = l.strip()
@@ -51,11 +44,10 @@ def execute_js(source_file, tests_file):
     cx = rt.new_context()
     window = {}
     cx.add_global('window', window)
-    support_js = open('../js/jinja2support.js').read()
+    support_js = open(support_file).read()
     cx.execute(support_js)
     cx.add_global('jinja2support', window['jinja2support'])
-    src = jscompiler.generate(env, None, source_file)
-    cx.execute(src)
+    cx.execute(source)
     for command, expected in tests:
         result = cx.execute('window.jinja2js.' + command).strip()
         if result != expected:
@@ -67,29 +59,35 @@ def execute_js(source_file, tests_file):
             assert False, "Test failed"
 
 
+def load_compare_execute(directory, support_file, source_file):
+    js_file = os.path.join(directory, re.sub('\\.jinja$', '.js', source_file))
+    tpl_src = jscompiler.generate(env, js_file, source_file)
+    correct_test = False
+    if os.path.exists(js_file):
+        correct_test = True
+        expected = open(js_file).read()
+        compare(tpl_src, expected)
+    test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', source_file))
+    if os.path.exists(test_file):
+        correct_test = True
+        execute_template(tpl_src, support_file, test_file)
+    if not correct_test:
+        assert False, "Invalid test: .js or .test file required"
+
+
 def test_file_templates():
     # test will run from either location
     directory = 'jinja2js/test_templates'
     if os.path.isfile('tests.py'):
         directory = 'test_templates'
+    support_file = os.path.join(directory, os.pardir, os.pardir,
+                                'js', 'jinja2support.js')
 
     files = os.listdir(directory)
     files = fnmatch.filter(files, '*.jinja')
 
     for f in files:
-        js_file = os.path.join(directory, re.sub('\\.jinja$', '.js', f))
-        correct_test = False
-        if os.path.exists(js_file):
-            correct_test = True
-            yield load_and_compare, f, js_file
-        test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', f))
-        if os.path.exists(test_file):
-            correct_test = True
-            yield execute_js, f, test_file
-        if not correct_test:
-            def fail():
-                assert False, "Invalid test: .js or .test file required"
-            yield fail
+        yield load_compare_execute, directory, support_file, f
 
 
 @raises(TemplateAssertionError)

@@ -33,7 +33,7 @@ def execute_template(js_source, source_file, support_file, tests_file):
     tests = []
     for l in open(tests_file):
         l = l.strip()
-        if not l:
+        if not l or l[0] == '#':
             continue
         args_start_pos = l.find('(')
         args_end_pos = l.rfind(')')

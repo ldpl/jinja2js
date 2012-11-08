@@ -1037,8 +1037,9 @@ def filter_last(generator, node, frame):
 
 @register_filter("length")
 def filter_length(generator, node, frame):
+    generator.write('_.length(')
     generator.visit(node.node, frame)
-    generator.write(".length")
+    generator.write(")")
 
 
 @register_filter("replace")

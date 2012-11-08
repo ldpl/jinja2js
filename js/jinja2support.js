@@ -3,6 +3,21 @@
     var has = Object.prototype.hasOwnProperty;
     var indexOf = Array.prototype.indexOf;
 
+    var _str_to_type = {};
+    var _types = "Boolean Number String Function Array Date RegExp".split(" ");
+    for (var i = 0; i < _types.length; i++) {
+        var obj_str = "[object " + _types[i] + "]";
+        _str_to_type[obj_str] = _types[i].toLowerCase();
+    }
+    jinja2support.type_of = function (value) {
+        if (value === undefined) return 'undefined';
+        if (value === null) return 'null';
+        type_str = Object.prototype.toString.call(value);
+        if (type_str in _str_to_type)
+            return _str_to_type[type_str];
+        return 'object';
+    };
+
     jinja2support.parse_args = function(args, argspec) {
         var data = {};
         if (typeof(args[args.length - 1]) === 'function') {
@@ -56,6 +71,14 @@
         return function () {
             return arguments[index % arguments.length];
         };
+    };
+
+    jinja2support.length = function(value) {
+        if (jinja2support.type_of(value) != 'object')
+            return value.length;
+        var res = 0;
+        for (var k in value) res++;
+        return res;
     };
 
     jinja2support.truncate = function(str, length, killwords, end) {

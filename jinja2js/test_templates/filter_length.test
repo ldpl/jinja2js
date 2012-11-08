@@ -1,0 +1,6 @@
+length_filter("test str")
+length_filter("")
+length_filter(["a", 3, 8, 5])
+length_filter([])
+length_filter({"a": 1, "b": 2, "c": 3})
+length_filter({})

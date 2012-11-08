@@ -1004,11 +1004,16 @@ def filter_default(generator, node, frame, default_value=""):
     generator.write(")")
 
 
-@register_filter("truncate")
-def filter_truncate(generator, node, frame, length):
+@register_filter('truncate')
+def filter_truncate(generator, node, frame, length=255, killwords=False, end='...'):
+    generator.write("_.truncate(")
     generator.visit(node.node, frame)
-    generator.write(".substring(0, ")
+    generator.write(", ")
     generator.visit(length, frame)
+    generator.write(", ")
+    generator.visit(killwords, frame)
+    generator.write(", ")
+    generator.visit(end, frame)
     generator.write(")")
 
 

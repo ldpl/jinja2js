@@ -58,4 +58,23 @@
         };
     };
 
+    jinja2support.truncate = function(str, length, killwords, end) {
+        if (str.length <= length) {
+            return str;
+        }
+        if (!keywords) {
+            return str.substring(0, length) + end;
+        }
+        var words = s.split(' ');
+        var result = [];
+        var m = 0;
+        for (var i = 0; i < words.length; i++) {
+            m += words[i].length + 1;
+            if (m > length) break;
+            result.push(words[i]);
+        }
+        result.push(end);
+        return result.join(' ');
+    };
+
 })(window.jinja2support = window.jinja2support || {});

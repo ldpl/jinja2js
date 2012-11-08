@@ -987,10 +987,13 @@ class register_filter(object):
         return func
 
 
-@register_filter("string")
-def filter_string(generator, node, frame):
-    generator.write("'' + ")
+@register_filter("capitalize")
+def filter_capitalize(generator, node, frame):
     generator.visit(node.node, frame)
+    generator.write(".substring(0, 1).toUpperCase()")
+    generator.write_outputappend_add(node, frame)
+    generator.visit(node.node, frame)
+    generator.write(".substring(1)")
 
 
 @register_filter("default")
@@ -1004,26 +1007,16 @@ def filter_default(generator, node, frame, default_value=""):
     generator.write(")")
 
 
-@register_filter('truncate')
-def filter_truncate(generator, node, frame, length=255, killwords=False, end='...'):
-    generator.write("_.truncate(")
+@register_filter('join')
+def filter_join(generator, node, frame, separator=None):
     generator.visit(node.node, frame)
-    generator.write(", ")
-    generator.visit(length, frame)
-    generator.write(", ")
-    generator.visit(killwords, frame)
-    generator.write(", ")
-    generator.visit(end, frame)
-    generator.write(")")
-
-
-@register_filter("capitalize")
-def filter_capitalize(generator, node, frame):
-    generator.visit(node.node, frame)
-    generator.write(".substring(0, 1).toUpperCase()")
-    generator.write_outputappend_add(node, frame)
-    generator.visit(node.node, frame)
-    generator.write(".substring(1)")
+    if separator is None:
+        separator = "''"
+    else:
+        separator_value = []
+        generator.visit(separator, frame, separator_value)
+        separator = '.'.join(separator_value)
+    generator.write('.join(%s)' % separator)
 
 
 @register_filter("last")
@@ -1070,16 +1063,23 @@ def filter_round(generator, node, frame, precision=jinja2.nodes.Const(0)):
         generator.write(" / %s" % precision)
 
 
-@register_filter('join')
-def filter_join(generator, node, frame, separator=None):
+@register_filter("string")
+def filter_string(generator, node, frame):
+    generator.write("'' + ")
     generator.visit(node.node, frame)
-    if separator is None:
-        separator = "''"
-    else:
-        separator_value = []
-        generator.visit(separator, frame, separator_value)
-        separator = '.'.join(separator_value)
-    generator.write('.join(%s)' % separator)
+
+
+@register_filter('truncate')
+def filter_truncate(generator, node, frame, length=255, killwords=False, end='...'):
+    generator.write("_.truncate(")
+    generator.visit(node.node, frame)
+    generator.write(", ")
+    generator.visit(length, frame)
+    generator.write(", ")
+    generator.visit(killwords, frame)
+    generator.write(", ")
+    generator.visit(end, frame)
+    generator.write(")")
 
 
 def generate(environment, name, filename, namespace="jinja2js"):

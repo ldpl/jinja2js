@@ -63,10 +63,10 @@
         if (type === 'object') {
             for (var prop in value)
                 if (has.call(value, prop))
-                    return false;
-            return true;
+                    return true;
+            return false;
         }
-        return !value;
+        return value;
     };
 
     jinja2support.arg_getter = function(index) {

@@ -1,0 +1,4 @@
+forinlist([{"name": "aa"}, {"name": "bb"}])
+
+js> for_2({"get_sample": function(expr) {return {"cluster": [1, 2, 4]};}})
+py> for_2({"get_sample": lambda expr: {"cluster": [1, 2, 4]}})

@@ -7,14 +7,18 @@ import json
 from nose.tools import raises
 import spidermonkey
 
-from jinja2 import Environment, PackageLoader, Template
+from jinja2 import Environment, PackageLoader
 from jinja2.compiler import TemplateAssertionError
 
 import jscompiler
 
 
-env = Environment(loader=PackageLoader('jinja2js', 'test_templates'),
-                  autoescape=True)
+loader = PackageLoader('jinja2js', 'test_templates')
+env = Environment(loader=loader, autoescape=True)
+ENVIRONMENTS = {
+    'default': env,
+    'noescape': Environment(loader=loader, autoescape=False)
+}
 
 
 def compare(result, expected):
@@ -28,9 +32,9 @@ def compare(result, expected):
         assert False, "Result and expected do not match"
 
 
-def execute_template(js_source, source_file, support_file, tests_file):
-    j2_template = env.get_template(source_file)
+def execute_template(source_file, support_file, tests_file):
     tests = []
+    used_envs = set()
     for l in open(tests_file):
         l = l.strip()
         if not l or l[0] == '#':
@@ -43,6 +47,15 @@ def execute_template(js_source, source_file, support_file, tests_file):
             l = l[3:].strip()
             lang = 'py'
 
+        env_names = ['default', 'noescape']
+        for en in ENVIRONMENTS.keys():
+            if not l.startswith(en + '>'):
+                continue
+            env_names = [en]
+            l = l[len(en) + 1:].strip()
+            break
+        used_envs.update(env_names)
+
         args_start_pos = l.find('(')
         args_end_pos = l.rfind(')')
         macro_name = l[:args_start_pos]
@@ -50,53 +63,65 @@ def execute_template(js_source, source_file, support_file, tests_file):
         args_json = '[' + args_str[1:-1] + ']'
         if lang == 'any':
             args = json.loads(args_json)
-            tests.append([macro_name, args, args_str])
+            tests.append([macro_name, args, args_str, env_names])
         elif lang == 'js':
             if tests and tests[-1][0] == macro_name:
                 tests[-1][2] = args_str
             else:
-                tests.append([macro_name, None, args_str])
+                tests.append([macro_name, None, args_str, env_names])
         elif lang == 'py':
             args = eval(args_json)
             if tests and tests[-1][0] == macro_name:
                 tests[-1][1] = args
             else:
-                tests.append([macro_name, args, None])
+                tests.append([macro_name, args, None, env_names])
 
-    rt = spidermonkey.Runtime()
-    cx = rt.new_context()
-    window = {}
-    cx.add_global('window', window)
-    support_js = open(support_file).read()
-    cx.execute(support_js)
-    cx.add_global('jinja2support', window['jinja2support'])
-    print js_source
-    cx.execute(js_source)
-    for macro, args_py, args_js in tests:
-        expected = getattr(j2_template.module, macro)(*args_py)
-        js_command = 'window.jinja2js.' + macro + args_js
-        result = cx.execute(js_command).strip()
-        if result != expected:
-            print "Test:", macro, args_str
-            print "Expected:"
-            print expected
-            print "Result:"
-            print result
-            assert False, "Test failed"
+    sm_runtime = spidermonkey.Runtime()
+
+    j2_templates = {}
+    js_contexts = {}
+    js_sources = {}
+    for env_name in used_envs:
+        env = ENVIRONMENTS[env_name]
+        j2_templates[env_name] = env.get_template(source_file)
+        js_source = jscompiler.generate(env, None, source_file)
+        cx = sm_runtime.new_context()
+        window = {}
+        cx.add_global('window', window)
+        support_js = open(support_file).read()
+        cx.execute(support_js)
+        cx.add_global('jinja2support', window['jinja2support'])
+        cx.execute(js_source)
+        js_contexts[env_name] = cx
+        js_sources[env_name] = js_source
+
+    for macro, args_py, args_js, env_names in tests:
+        for e in env_names:
+            expected = getattr(j2_templates[e].module, macro)(*args_py)
+            js_command = 'window.jinja2js.' + macro + args_js
+            result = js_contexts[e].execute(js_command).strip()
+            if result != expected:
+                print js_sources[e]
+                print "Test:", e, macro, args_str
+                print "Expected:"
+                print expected
+                print "Result:"
+                print result
+                assert False, "Test failed"
 
 
 def load_compare_execute(directory, support_file, source_file):
     js_file = os.path.join(directory, re.sub('\\.jinja$', '.js', source_file))
-    tpl_src = jscompiler.generate(env, js_file, source_file)
     correct_test = False
     if os.path.exists(js_file):
         correct_test = True
         expected = open(js_file).read()
+        tpl_src = jscompiler.generate(env, js_file, source_file)
         compare(tpl_src, expected)
     test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', source_file))
     if os.path.exists(test_file):
         correct_test = True
-        execute_template(tpl_src, source_file, support_file, test_file)
+        execute_template(source_file, support_file, test_file)
     if not correct_test:
         assert False, "Invalid test: .js or .test file required"
 

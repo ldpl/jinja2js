@@ -494,7 +494,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
             output = ids.imports[name]
 
             frame.assigned_names.add(ids.imports[name])
-        elif name in self.environment.js_globals:
+        elif name in getattr(self.environment, 'js_globals', []):
             output = name
         else:
             raise jinja2.compiler.TemplateAssertionError(

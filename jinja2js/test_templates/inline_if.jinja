@@ -1,0 +1,8 @@
+{%- macro inline_if(cond, a, b) -%}
+    {{ a if cond else b }}
+{%- endmacro -%}
+
+{%- macro inline_if_with_context(cond, a, b) -%}
+    {%- set v = 5 -%}
+    xx{{ v }}xx{{ a if cond else b }}yyy{{ v }}yy
+{%- endmacro -%}

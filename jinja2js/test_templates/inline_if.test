@@ -1,0 +1,5 @@
+inline_if(true, "a", "bbb")
+inline_if(false, "c", "ddd")
+inline_if(true, 1, "ccc")
+inline_if(true, 0, 1)
+inline_if_with_context(true, "aa", "bb")

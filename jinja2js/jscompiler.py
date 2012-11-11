@@ -708,6 +708,11 @@ class MacroCodeGenerator(BaseCodeGenerator):
 
         self.writeline("}")
 
+    def write_iterable(self, node, frame):
+        self.write('_.iter(')
+        self.visit(node, frame)
+        self.write(')')
+
     def visit_For(self, node, frame):
         node.iter_child_nodes(exclude=("iter",))
 
@@ -734,7 +739,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
                     name.lineno, self.name, self.filename)
 
         self.writeline("var %sList = " % node.target.name)
-        self.visit(node.iter, loop_frame)
+        self.write_iterable(node.iter, loop_frame)
         self.write(";")
 
         self.writeline("var %(name)sListLen = %(name)sList.length;"

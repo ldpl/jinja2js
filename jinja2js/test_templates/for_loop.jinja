@@ -9,3 +9,9 @@
         {{ c }}
     {%- endfor -%}
 {%- endmacro -%}
+
+{%- macro for_test(obj) -%}
+    {%- for v in obj -%}
+        {{ v }}
+    {%- endfor -%}
+{%- endmacro -%}

@@ -2,6 +2,18 @@
     var toString = Object.prototype.toString;
     var has = Object.prototype.hasOwnProperty;
     var indexOf = Array.prototype.indexOf;
+    var objectKeys;
+    if (!Object.keys) {
+        objectKeys = function (obj) {
+            res = [];
+            for (var k in obj)
+                if (has.call(obj, k))
+                    res.push(k);
+            return res;
+        };
+    } else {
+        objectKeys = Object.prototype.keys.call;
+    }
 
     var _str_to_type = {};
     var _types = "Boolean Number String Function Array Date RegExp".split(" ");
@@ -17,6 +29,7 @@
             return _str_to_type[type_str];
         return 'object';
     };
+
 
     jinja2support.parse_args = function(args, argspec) {
         var data = {};
@@ -75,11 +88,21 @@
         };
     };
 
+    jinja2support.iter = function(obj) {
+        var otype = type_of(obj);
+        if (otype == 'object') {
+            return objectKeys(obj);
+        }
+        return obj;
+    };
+
     jinja2support.length = function(value) {
         if (type_of(value) !== 'object')
             return value.length;
         var res = 0;
-        for (var k in value) res++;
+        for (var k in value)
+            if (has.call(value, k))
+                res++;
         return res;
     };
 

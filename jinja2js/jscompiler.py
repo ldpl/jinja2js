@@ -929,6 +929,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
         self.write(";")
 
     def visit_CondExpr(self, node, frame):
+        if not frame.escaped: self.write('(')
         self.visit(node.test, frame)
         self.write(' ? ')
         self.visit(node.expr1, frame)
@@ -941,6 +942,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
             self.visit(node.expr2, frame)
         else:
             self.write("''")
+        if not frame.escaped: self.write(')')
 
     def visit_Value(self, value):
         if isinstance(value, bool):

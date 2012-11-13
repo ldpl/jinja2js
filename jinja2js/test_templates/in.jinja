@@ -1,0 +1,7 @@
+{% macro test_in(val, obj) -%}
+    {% if val in obj %}Yes{% endif %}
+{%- endmacro %}
+
+{% macro test_not_in(val, obj) -%}
+    {% if val not in obj %}No{% endif %}
+{%- endmacro %}

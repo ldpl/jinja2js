@@ -12,7 +12,7 @@
             return res;
         };
     } else {
-        objectKeys = Object.prototype.keys.call;
+        objectKeys = Object.keys;
     }
 
     var _str_to_type = {};
@@ -53,7 +53,7 @@
     };
 
     jinja2support.in_ = function(value, collection) {
-        if (type_of(collection) === '[object Array]') {
+        if (type_of(collection) === 'array') {
             if (indexOf) {
                 return indexOf.call(collection, value) > -1;
             }

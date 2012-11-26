@@ -1,0 +1,17 @@
+test_range1(0)
+test_range1(1)
+test_range1(7)
+
+test_range2(0, 0)
+test_range2(0, 7)
+test_range2(1, 7)
+test_range2(3, 7)
+test_range2(-2, 7)
+test_range2(-3, -3)
+
+test_range(-2, 7, 2)
+test_range(-4, -10, -2)
+test_range(4, -10, -3)
+test_range(-4, 5, 1)
+test_range(0, 0, -1)
+test_range(0, 0, -1)

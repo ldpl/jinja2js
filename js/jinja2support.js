@@ -125,4 +125,27 @@
         return result.join(' ');
     };
 
+    jinja2support.range = function(start, stop, step) {
+        if (step === undefined) {
+            step = 1;
+        }
+        if (stop === undefined) {
+            stop = start;
+            start = 0;
+        }
+        var res = [];
+        // FIXME it's better to throw exception in case of step==0
+        if (step === 0) return res;
+        if (step > 0) {
+            for(; start < stop; start += step) {
+                res.push(start);
+            }
+        } else {
+            for(; start > stop; start += step) {
+                res.push(start);
+            }
+        }
+        return res;
+    };
+
 })(window.jinja2support = window.jinja2support || {});

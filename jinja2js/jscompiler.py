@@ -462,6 +462,8 @@ class MacroCodeGenerator(BaseCodeGenerator):
         # declared
         # outer_undeclared
         # declared_locally
+        # declared in js_globals
+        # global functions (range)
         # undeclared
         name = node.name
         isparam = False
@@ -910,7 +912,11 @@ class MacroCodeGenerator(BaseCodeGenerator):
         #                                 []):
         #     func_name = self.environment.js_func_aliases[func_name]
         # else:
-        self.visit(node.node, call_frame)
+        if (isinstance(node.node, jinja2.nodes.Name) and
+            node.node.name == "range"):
+            self.write("_.range")
+        else:
+            self.visit(node.node, call_frame)
 
         # function signature
         self.write("(")

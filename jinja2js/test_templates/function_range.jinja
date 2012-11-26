@@ -1,0 +1,17 @@
+{%- macro test_range(a, b, c) -%}
+    {%- for i in range(a, b, c) -%}
+        {{- i -}},
+    {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro test_range1(a) -%}
+    {%- for i in range(a) -%}
+        {{- i -}},
+    {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro test_range2(a, b) -%}
+    {%- for i in range(a, b) -%}
+        {{- i -}},
+    {%- endfor -%}
+{%- endmacro -%}

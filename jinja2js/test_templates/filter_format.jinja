@@ -1,0 +1,15 @@
+{%- macro filter_format0(fmt) -%}
+    {{ fmt|format }}
+{%- endmacro -%}
+
+{%- macro filter_format1(fmt, arg) -%}
+    {{ fmt|format(arg) }}
+{%- endmacro -%}
+
+{%- macro filter_format2(fmt, a, b) -%}
+    {{ fmt|format(a, b) }}
+{%- endmacro -%}
+
+{%- macro filter_format3(fmt, a, b, c) -%}
+    {{ fmt|format(a, b, c) }}
+{%- endmacro -%}

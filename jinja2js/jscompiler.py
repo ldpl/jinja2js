@@ -1011,6 +1011,40 @@ def filter_default(generator, node, frame, default_value=""):
     generator.write(")")
 
 
+@register_filter('date')
+def filter_date(generator, node, frame, format=None):
+    generator.write('_.date_format(')
+    generator.visit(node.node, frame)
+    generator.write(', ')
+    if format:
+        generator.visit(format, frame)
+    else:
+        generator.write('_.DATE_FORMAT')
+    generator.write(')')
+
+
+@register_filter('datetime')
+def filter_datetime(generator, node, frame, format=None):
+    generator.write('_.date_format(')
+    generator.visit(node.node, frame)
+    generator.write(', ')
+    if format:
+        generator.visit(format, frame)
+    else:
+        generator.write('_.DATETIME_FORMAT')
+    generator.write(')')
+
+
+@register_filter('format')
+def filter_format(generator, node, frame, *args):
+    generator.write('sprintf(')
+    generator.visit(node.node, frame)
+    for a in args:
+        generator.write(', ')
+        generator.visit(a, frame)
+    generator.write(')')
+
+
 @register_filter('join')
 def filter_join(generator, node, frame, separator=''):
     generator.visit(node.node, frame)

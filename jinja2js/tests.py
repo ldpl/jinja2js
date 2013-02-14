@@ -32,7 +32,7 @@ def compare(result, expected):
         assert False, "Result and expected do not match"
 
 
-def execute_template(source_file, support_file, tests_file):
+def execute_template(source_file, support_files, tests_file):
     tests = []
     used_envs = set()
     for l in open(tests_file):
@@ -88,8 +88,9 @@ def execute_template(source_file, support_file, tests_file):
         cx = sm_runtime.new_context()
         window = {}
         cx.add_global('window', window)
-        support_js = open(support_file).read()
-        cx.execute(support_js)
+        for sf in support_files:
+            support_js = open(sf).read()
+            cx.execute(support_js)
         cx.add_global('jinja2support', window['jinja2support'])
         cx.execute(js_source)
         js_contexts[env_name] = cx
@@ -110,7 +111,7 @@ def execute_template(source_file, support_file, tests_file):
                 assert False, "Test failed"
 
 
-def load_compare_execute(directory, support_file, source_file):
+def load_compare_execute(directory, support_files, source_file):
     js_file = os.path.join(directory, re.sub('\\.jinja$', '.js', source_file))
     correct_test = False
     if os.path.exists(js_file):
@@ -121,7 +122,7 @@ def load_compare_execute(directory, support_file, source_file):
     test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', source_file))
     if os.path.exists(test_file):
         correct_test = True
-        execute_template(source_file, support_file, test_file)
+        execute_template(source_file, support_files, test_file)
     if not correct_test:
         assert False, "Invalid test: .js or .test file required"
 
@@ -133,12 +134,15 @@ def test_file_templates():
         directory = 'test_templates'
     support_file = os.path.join(directory, os.pardir, os.pardir,
                                 'js', 'jinja2support.js')
+    sprintf_file = os.path.join(directory, os.pardir, os.pardir,
+                                'js', 'sprintf-0.7-beta1.js')
 
     files = os.listdir(directory)
     files = fnmatch.filter(files, '*.jinja')
 
     for f in files:
-        yield load_compare_execute, directory, support_file, f
+        yield load_compare_execute, directory, \
+              (support_file, sprintf_file), f
 
 
 @raises(TemplateAssertionError)

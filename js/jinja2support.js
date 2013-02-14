@@ -148,4 +148,28 @@
         return res;
     };
 
+    jinja2support.date_format = function(timestamp, format) {
+        if (timestamp === null)
+            return '';
+        var date = new Date(timestamp * 1000);
+        zero_padded = function (val) {
+            if (val >= 10)
+                return '' + val;
+            return '0' + val;
+        };
+        MONTH_3 = {
+            1: 'янв', 2: 'фев', 3: 'мар', 4: 'апр',
+            5: 'май', 6: 'июн', 7: 'июл', 8: 'авг',
+            9: 'сен', 10: 'окт', 11: 'ноя', 12: 'дек'
+        };
+        return ('' + format)
+            .replace('H', date.getHours())
+            .replace('i', zero_padded(date.getMinutes()))
+            .replace('s', zero_padded(date.getSeconds()))
+            .replace('d', zero_padded(date.getDate()))
+            .replace('m', zero_padded(date.getMonth() + 1))
+            .replace('M', MONTH_3[date.getMonth() + 1])
+            .replace('Y', date.getFullYear());
+    };
+
 })(window.jinja2support = window.jinja2support || {});

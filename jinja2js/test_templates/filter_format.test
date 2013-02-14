@@ -1,0 +1,6 @@
+filter_format0("test")
+filter_format1("%d", 12345)
+filter_format1("%.1f", 223.23432)
+filter_format1("%.2f", 223.23432)
+filter_format1("%.3f", 223.23432)
+filter_format2("%s %s", "hi", "there")

@@ -1,6 +1,6 @@
 import re
 
-from cStringIO import StringIO
+from io import StringIO
 
 from jinja2.visitor import NodeVisitor
 import jinja2.nodes
@@ -57,7 +57,7 @@ class JSFrameIdentifierVisitor(jinja2.compiler.FrameIdentifierVisitor):
 
     def visit_Macro(self, node):
         self.identifiers.declared_locally.add(
-            ("%s" % (node.name)).encode("utf-8"))
+            (str(node.name)))
 
     def visit_Import(self, node):
         # register import target as declare_locally
@@ -183,11 +183,7 @@ class BaseCodeGenerator(NodeVisitor):
         self.write(x)
 
     def write_string_const(self, x):
-        xrepr = repr(x)
-        if xrepr[0] == 'u':
-            self.write(xrepr[1:])
-        else:
-            self.write(xrepr)
+        self.write(repr(x))
 
     def mark(self, node):
         # Mark the current output to correspond to the node.
@@ -231,7 +227,7 @@ class BaseCodeGenerator(NodeVisitor):
             self.visit(node, frame)
 
     def visit(self, node, *args, **kwargs):
-        if isinstance(node, (str, unicode, bool, int)):
+        if isinstance(node, (str, bool, int)):
             return self.visit_Value(node)
         return NodeVisitor.visit(self, node, *args, **kwargs)
 
@@ -307,7 +303,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
         # the templates that is out side the macros.
         if frame.toplevel:
             return
-        finalize = unicode
+        finalize = str
 
         # try to evaluate as many chunks as possible into a static
         # string at compile time.
@@ -351,7 +347,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
                 if getattr(self.environment, "strip_html_whitespace", False):
                     item = [strip_html_whitespace(itemhtml)
                             for itemhtml in item]
-                self.write(repr("".join(item))[1:])
+                self.write(repr("".join(item)))
             else:
                 if start:
                     self.writeline_outputappend(item, frame)

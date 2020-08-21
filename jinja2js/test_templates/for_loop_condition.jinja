@@ -13,3 +13,16 @@
         none
     {%- endfor -%}
 {% endmacro %}
+
+{% macro for_loop_condition_2x(items, exclude) %}
+    {%- for i in  items if  i != exclude -%}
+        {{ i }}
+    {%- else -%}
+        none
+    {%- endfor -%}
+    {%- for i in  items if  i != exclude -%}
+        {{ i }}
+    {%- else -%}
+        none
+    {%- endfor -%}
+{% endmacro %}

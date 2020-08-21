@@ -754,6 +754,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
             self.writeline(f'__{name}_list = __{name}_list.filter(function({name}) {{');
             self.indent()
             self.writeline('return ');
+            loop_frame.reassigned_names[name] = name
             self.write_bool_expr(node.test, loop_frame);
             self.write(';');
             self.outdent()
@@ -769,7 +770,7 @@ class MacroCodeGenerator(BaseCodeGenerator):
         self.indent()
 
         self.writeline(f"var __{name}_data = __{name}_list[__{name}_index];")
-        loop_frame.reassigned_names[node.target.name] = f"__{name}_data"
+        loop_frame.reassigned_names[name] = f"__{name}_data"
         self.blockvisit(node.body, loop_frame)
         self.outdent()
         self.writeline("}")

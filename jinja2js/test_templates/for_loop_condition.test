@@ -7,3 +7,9 @@ for_loop_extended_condition([1, 2, 3, 4, 5], 1)
 for_loop_extended_condition([1, 2, 3, 4, 5], 3)
 for_loop_extended_condition([1, 2, 3, 4, 5], 5)
 for_loop_extended_condition([1, 2, 3, 4, 5], 6)
+
+for_loop_condition_2x([1, 2, 3, 4, 5], 1)
+for_loop_condition_2x([1, 2, 3, 4, 5], 3)
+for_loop_condition_2x([1, 2, 3, 4, 5], 5)
+for_loop_condition_2x([1, 2, 3, 4, 5], 6)
+

@@ -5,8 +5,7 @@ import re
 import json
 
 from nose.tools import raises
-# import spidermonkey
-
+import spidermonkey  # pip install -e "git+https://github.com/andrewleech/python-spidermonkey-1#egg=python-spidermonkey"
 from jinja2 import Environment, PackageLoader
 from jinja2.compiler import TemplateAssertionError
 
@@ -76,7 +75,7 @@ def execute_template(source_file, support_files, tests_file):
             else:
                 tests.append([macro_name, args, None, env_names])
 
-    sm_runtime = Runtime()
+    sm_runtime = spidermonkey.Runtime()
 
     j2_templates = {}
     js_contexts = {}
@@ -85,6 +84,7 @@ def execute_template(source_file, support_files, tests_file):
         env = ENVIRONMENTS[env_name]
         j2_templates[env_name] = env.get_template(source_file)
         js_source = jscompiler.generate(env, None, source_file)
+        print(js_source)
         cx = sm_runtime.new_context()
         window = {}
         cx.add_global('window', window)
@@ -111,21 +111,13 @@ def execute_template(source_file, support_files, tests_file):
                 assert False, "Test failed"
 
 
-def load_compare_execute(directory, support_files, source_file):
-    js_file = os.path.join(directory, re.sub('\\.jinja$', '.js', source_file))
-    correct_test = False
-    if os.path.exists(js_file):
-        correct_test = True
-        expected = open(js_file).read()
-        tpl_src = jscompiler.generate(env, js_file, source_file)
-        compare(tpl_src, expected)
-    # test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', source_file))
-    # if os.path.exists(test_file):
-    #     correct_test = True
-    #     execute_template(source_file, support_files, test_file)
-    # if not correct_test:
-    #     assert False, "Invalid test: .js or .test file required"
+def load_compare(directory, support_files, source_file, js_file):
+    expected = open(js_file).read()
+    tpl_src = jscompiler.generate(env, js_file, source_file)
+    compare(tpl_src, expected)
 
+def load_execute(directory, support_files, source_file, test_file):
+    execute_template(source_file, support_files, test_file)
 
 def test_file_templates():
     # test will run from either location
@@ -141,8 +133,15 @@ def test_file_templates():
     files = fnmatch.filter(files, '*.jinja')
 
     for f in files:
-        yield load_compare_execute, directory, \
-              (support_file, sprintf_file), f
+        # if f != 'for_loop_condition.jinja': continue
+        test_file = os.path.join(directory, re.sub('\\.jinja$', '.test', f))
+        js_file = os.path.join(directory, re.sub('\\.jinja$', '.js', f))
+        if os.path.exists(test_file):
+            yield load_execute, directory, (support_file, sprintf_file), f, test_file
+        elif os.path.exists(js_file):
+            yield load_compare, directory, (support_file, sprintf_file), f, js_file
+        else:
+            assert False, f".js or .test file required for {f}"
 
 
 @raises(TemplateAssertionError)

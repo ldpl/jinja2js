@@ -537,27 +537,27 @@ class MacroCodeGenerator(BaseCodeGenerator):
         # we are inside a for loop, likely when we are calling other macros.
         if frame.forloop_buffer and getattr(node.node, "name", None) == "loop":
             if node.attr == "index0":
-                self.write("%sIndex" % frame.forloop_buffer)
+                self.write("__%s_index" % frame.forloop_buffer)
             elif node.attr == "index":
-                self.write("%sIndex + 1" % frame.forloop_buffer)
+                self.write("(__%s_index + 1)" % frame.forloop_buffer)
             elif node.attr == "revindex0":
-                self.write("%sListLen - %sIndex"
+                self.write("(__%s_list_len - __%s_index - 1)"
                                   % (frame.forloop_buffer,
                                      frame.forloop_buffer))
             elif node.attr == "revindex":
-                self.write("%sListLen - %sIndex - 1"
+                self.write("(__%s_list_len - __%s_index)"
                                   % (frame.forloop_buffer,
                                      frame.forloop_buffer))
             elif node.attr == "first":
-                self.write("%sIndex == 0" % frame.forloop_buffer)
+                self.write("(__%s_index == 0)" % frame.forloop_buffer)
             elif node.attr == "last":
-                self.write("%sIndex == (%sListLen - 1)"
+                self.write("(__%s_index == (__%s_list_len - 1))"
                                   % (frame.forloop_buffer,
                                      frame.forloop_buffer))
             elif node.attr == "length":
-                self.write("%sListLen" % frame.forloop_buffer)
+                self.write("__%s_list_len" % frame.forloop_buffer)
             elif node.attr == "cycle":
-                self.write('_.arg_getter(%sIndex)' % frame.forloop_buffer)
+                self.write('_.arg_getter(__%s_index)' % frame.forloop_buffer)
             else:
                 raise AttributeError("loop.%s not defined" % node.attr)
         else:
@@ -711,6 +711,14 @@ class MacroCodeGenerator(BaseCodeGenerator):
         self.visit(node, frame)
         self.write(')')
 
+    def write_bool_expr(self, node, frame):
+        test_bool = type(node) in BOOL_NODES
+        if not test_bool:
+            self.write('_.truth(')
+        self.visit(node, frame)
+        if not test_bool:
+            self.write(')')
+
     def visit_For(self, node, frame):
         node.iter_child_nodes(exclude=("iter",))
 
@@ -724,37 +732,44 @@ class MacroCodeGenerator(BaseCodeGenerator):
         extended_loop = "loop" in jinja2.compiler.find_undeclared(
             node.iter_child_nodes(only=("body",)), ("loop",))
 
+        name  = node.target.name
+
         # JavaScript for loops don't change namespace
         loop_frame = frame.soft()
 
         if extended_loop:
             loop_frame.identifiers.add_special("loop")
-            loop_frame.forloop_buffer = node.target.name
-        for name in node.find_all(jinja2.nodes.Name):
-            if name.ctx == "store" and name.name == "loop":
+            loop_frame.forloop_buffer = name
+        for n in node.find_all(jinja2.nodes.Name):
+            if n.ctx == "store" and n.name == "loop":
                 raise jinja2.compiler.TemplateAssertionError(
                     "Can't assign to special loop variable in for-loop target",
-                    name.lineno, self.name, self.filename)
+                    n.lineno, self.name, self.filename)
 
-        self.writeline("var %sList = " % node.target.name)
+        self.writeline(f"var __{name}_list = ")
         self.write_iterable(node.iter, loop_frame)
         self.write(";")
 
-        self.writeline("var %(name)sListLen = %(name)sList.length;"
-                       % {"name": node.target.name})
+        if node.test:
+            self.writeline(f'__{name}_list = __{name}_list.filter(function({name}) {{');
+            self.indent()
+            self.writeline('return ');
+            self.write_bool_expr(node.test, loop_frame);
+            self.write(';');
+            self.outdent()
+            self.writeline("});")
+
+        self.writeline(f"var __{name}_list_len = __{name}_list.length;")
         if node.else_:
-            self.writeline("if (%sListLen > 0) {" % node.target.name)
+            self.writeline(f"if (__{name}_list_len > 0) {{")
             self.indent()
 
-        self.writeline("for (var %(name)sIndex = 0; %(name)sIndex <"
-                       " %(name)sListLen; %(name)sIndex++) {"
-                       % {"name": node.target.name})
+        self.writeline(f"for (var __{name}_index = 0; __{name}_index <"
+                       f" __{name}_list_len; __{name}_index++) {{")
         self.indent()
 
-        self.writeline("var %(name)sData = %(name)sList[%(name)sIndex];"
-                              % {"name": node.target.name})
-        loop_frame.reassigned_names[node.target.name] =\
-                "%sData" % node.target.name
+        self.writeline(f"var __{name}_data = __{name}_list[__{name}_index];")
+        loop_frame.reassigned_names[node.target.name] = f"__{name}_data"
         self.blockvisit(node.body, loop_frame)
         self.outdent()
         self.writeline("}")

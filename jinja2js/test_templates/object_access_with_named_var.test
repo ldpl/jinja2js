@@ -1,0 +1,6 @@
+test_named_access({"a": 1, "b": 2}, ["b"])
+# test_named_access({"a": 1, "b": 2}, ["c"])
+test_named_access_sub_value({"a": 1, "b": 2}, [{"name": "b"}])
+# test_named_access_sub_value({"a": 1, "b": 2}, [{"name": "c"}])
+# test_named_access_assigned_value("h1")
+# test_named_access_assigned_value("h2")

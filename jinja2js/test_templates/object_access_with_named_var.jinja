@@ -1,18 +1,18 @@
 {% macro test_named_access(types, allowed_types) %}
-{% for t in allowed_types %}
-{{ types[t] }}
-{% endfor %}
+    {%- for t in allowed_types -%}
+        {{ types[t] }}
+    {%- endfor -%}
 {% endmacro %}
 
 {% macro test_named_access_sub_value(types, allowed_types) %}
-{% for t in allowed_types %}
-{{ types[t.name] }}
-{% endfor %}
+    {%- for t in allowed_types -%}
+        {{ types[t.name] }}
+    {%- endfor -%}
 {% endmacro %}
 
 {% macro test_named_access_assigned_value(allowed_types) %}
-{% set types = {'h1': 'H1'} %}
-{% for t in allowed_types %}
-{{ types[t.name] }}
-{% endfor %}
+    {%- set types = {'h1': 'H1'} -%}
+    {%- for t in allowed_types -%}
+        {{ types[t.name] }}
+    {%- endfor -%}
 {% endmacro %}

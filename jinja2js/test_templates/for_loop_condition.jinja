@@ -1,0 +1,15 @@
+{% macro for_loop_simple_condition(items, exclude) %}
+    {%- for i in  items if  i != exclude -%}
+        {{ i }}
+    {%- else -%}
+        none
+    {%- endfor -%}
+{% endmacro %}
+
+{% macro for_loop_extended_condition(items, exclude) %}
+    {%- for i in  items if  i != exclude -%}
+        {{ loop.index }} {{ i }}
+    {%- else -%}
+        none
+    {%- endfor -%}
+{% endmacro %}

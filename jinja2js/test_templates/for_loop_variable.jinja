@@ -24,13 +24,13 @@
 
 {% macro for_loop_var_first(items) %}
     {%- for i in  items -%}
-        {{ loop.first }}
+        {{ 'true' if loop.first else 'false' }}
     {%- endfor -%}
 {% endmacro %}
 
 {% macro for_loop_var_last(items) %}
     {%- for i in  items -%}
-        {{ loop.last }}
+        {{ 'true' if loop.last else 'false' }}
     {%- endfor -%}
 {% endmacro %}
 
